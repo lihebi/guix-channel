@@ -1,0 +1,12 @@
+#+TITLE: My Guix Channel Playground
+
+To use this channel, put =$HOME/.config/guix/channels.scm= the following:
+
+#+BEGIN_EXAMPLE
+(cons (channel
+       (name 'guix-channel-hebi)
+       (url "https://github.com/lihebi/guix-channel.git")
+       (branch "master"))
+      %default-channels)
+#+END_EXAMPLE
+
