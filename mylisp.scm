@@ -1,4 +1,4 @@
-(define-module (gnu packages mylisp)
+(define-module (mylisp)
   #:use-module (gnu packages)
   #:use-module (gnu packages lisp)
   #:use-module ((guix licenses) #:prefix license:)
