@@ -10,3 +10,38 @@ To use this channel, put =$HOME/.config/guix/channels.scm= the following:
       %default-channels)
 #+END_EXAMPLE
 
+* Email
+
+Hi Guix,
+
+I'm trying to packaging tigervnc [1], a VNC viewer/server. There are
+several tricky parts that I don't know how to proceed yet.
+
+According to the building instruction [2], the process is as follows:
+1. copies the xorg-server source code under its sub folder
+2. apply different patches [3] to the xorg-srever code based on the
+versions
+3. run `autoreconf' and `configure' script with font, XKB, DRI
+directories as argument.
+
+My questions are:
+
+1. How should we get the correct xorg-server code? My thinking: put
+xorg-server as 'propagated-inputs', get the version of xorg-server, get
+the uri, download it. Or just copy it from existing gnu/store?
+2. 
+
+From what I understand, this creates the following difficulties for
+packaging:
+1. we need to get the current xorg-server version, and download (or
+copy?) the source code
+2. font, XKB, DRI directories as argument.
+
+
+
+At the end
+
+[1] https://tigervnc.org
+[2] https://github.com/TigerVNC/tigervnc/blob/master/BUILDING.txt#L97
+[3] https://github.com/TigerVNC/tigervnc/tree/master/unix,
+xserver18.patch, xserver19.patch, xserver120.patch, etc.
