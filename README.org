@@ -10,6 +10,78 @@ To use this channel, put =$HOME/.config/guix/channels.scm= the following:
       %default-channels)
 #+END_EXAMPLE
 
+* Nvidia Driver
+
+- https://github.com/Millak
+- https://github.com/rekado
+
+rekado
+- https://github.com/BIMSBbioinfo/guix-bimsb-nonfree
+
+Nvidia
+- https://git.archlinux.org/svntogit/packages.git/tree/trunk/PKGBUILD?h=packages/nvidia
+
+pkill9's guix config and packages:
+- https://miha.info/guix-fhs-service/
+- https://gitlab.com/pkill-9
+- https://gitlab.com/pkill-9/guix-config
+- https://gitlab.com/pkill-9/guix-packages-nonfree
+- https://gitlab.com/pkill-9/guix-packages-free
+
+Nix:
+- https://github.com/NixOS/nixpkgs/tree/bd6ba87381ef6274a830253b60e481209d4d7c7d/pkgs/os-specific/linux/nvidia-x11
+
+Arch PKGBUILD:
+- nvidia driver https://www.archlinux.org/packages/extra/x86_64/nvidia/
+- cuda https://www.archlinux.org/packages/community/x86_64/cuda/
+
+Looks like I have to have:
+1. ldconfig
+2. /lib64/ld.xxx
+3. /usr/include
+4. linux kernel tree
+
+The linux-libre-headers is not enough. I need the kernel source tree.
+
+** TODO amdgpu?
+OpenCL vs. Cuda
+
+** more references
+- read guix service https://guix.gnu.org/manual/en/html_node/Defining-Services.html#Defining-Services
+- custom kernel https://guix.gnu.org/blog/2019/creating-and-using-a-custom-linux-kernel-on-guix-system/
+- packaing tutorail https://guix.gnu.org/blog/2018/a-packaging-tutorial-for-guix/
+- nvidia installer source: https://download.nvidia.com/XFree86/nvidia-installer/
+
+** TODO patchelf all .so and bins
+so that I don't need:
+
+#+begin_example
+export LD_LIBRARY_PATH=/home/hebi/.guix-profile/lib:/usr/lib:$LD_LIBRARY_PATH
+#+end_example
+
+** TODO validate the patchelf using dll
+- libx11
+- all .so files
+** TODO enable validation phase
+** TODO if I manually load kernel, can I start X
+There is only one error:
+
+#+begin_example
+[  7383.840] (WW) Falling back to old probe method for modesetting
+#+end_example
+
+This error probably isn't important. I need to test if nouveau also has this error.
+
+I think the problem is due to my xwrapper, the Xorg probably works,
+but it is not starting a proper WM?  I would try gdm.
+
+** TODO load kernel module automatically
+LINUX_MODULE_DIRECTORY, I don't think it is possible. How Nix did it?
+** TODO generate a script for loading kernel modules
+** TODO test whether I can use cuda
+If the I finally cannot make the Xorg work
+
+
 * Email
 
 Hi Guix,
