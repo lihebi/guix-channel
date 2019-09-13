@@ -65,7 +65,7 @@
 format. ZPB-TTF is a TrueType file parser that provides an interface
 for reading typographic metrics, glyph outlines, and other information
 from the file.")
-   (license license:bsd-style)))
+   (license license:bsd-3)))
 
 
 (define-public sbcl-cl-paths
@@ -90,7 +90,7 @@ from the file.")
 format. ZPB-TTF is a TrueType file parser that provides an interface
 for reading typographic metrics, glyph outlines, and other information
 from the file.")
-   (license license:bsd-style)))
+   (license license:bsd-3)))
 
 (define-public sbcl-cl-paths-ttf
   (package
@@ -116,7 +116,7 @@ from the file.")
 format. ZPB-TTF is a TrueType file parser that provides an interface
 for reading typographic metrics, glyph outlines, and other information
 from the file.")
-   (license license:bsd-style)))
+   (license license:bsd-3)))
 
 (define-public sbcl-cl-vectors
   (package
@@ -141,7 +141,7 @@ from the file.")
 format. ZPB-TTF is a TrueType file parser that provides an interface
 for reading typographic metrics, glyph outlines, and other information
 from the file.")
-   (license license:bsd-style)))
+   (license license:bsd-3)))
 
 (define-public sbcl-zpb-ttf
   (package
@@ -165,7 +165,7 @@ from the file.")
 format. ZPB-TTF is a TrueType file parser that provides an interface
 for reading typographic metrics, glyph outlines, and other information
 from the file.")
-   (license license:bsd-style)))
+   (license license:bsd-3)))
 
 (define-public sbcl-cl-store
   (let ((revision "1")
@@ -211,7 +211,8 @@ rendering using CLX and Xrender extension.")
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/filonenko-mikhail/clx-truetype")
+         ;; (url "https://github.com/filonenko-mikhail/clx-truetype")
+         (url "https://github.com/lihebi/clx-truetype")
          (commit commit)))
        (sha256
         (base32
