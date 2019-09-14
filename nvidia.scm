@@ -18,6 +18,7 @@
   #:use-module (guix build-system trivial)
   #:use-module (guix build-system linux-module)
   #:use-module (ice-9 format)
+  #:use-module (ice-9 regex)
 
   #:use-module (gnu packages elf)
   #:use-module (gnu packages gcc)
@@ -25,6 +26,8 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages bootstrap)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages gtk)
+  #:use-module (gnu packages freedesktop)
 
   #:use-module (gnu packages base)
   #:use-module (gnu packages compression)
@@ -74,57 +77,23 @@
                       (lambda* (#:key inputs #:allow-other-keys #:rest r)
                         (let ((source (assoc-ref inputs "source")))
                           (invoke "sh" source "--extract-only")
-                          (invoke "pwd")
+                          ;; FIXME this version seems to work, but why?
                           (display ,(format #f "NVIDIA-Linux-x86_64-~a" version))
+                          ;; This dir name is fixed
                           (chdir ,(format #f "NVIDIA-Linux-x86_64-~a" version))
                           (invoke "pwd")
                           #t)))
                     ;; (delete 'configure)
                     (replace 'build
                       (lambda*  (#:key inputs outputs #:allow-other-keys)
-                        (define out
-                          (assoc-ref outputs "out"))
-                        (define linux-libre
-                          (assoc-ref inputs "linux-libre"))
-                        (define libc
-                          (assoc-ref inputs "libc"))
-                        (define gcc-lib
-                          (assoc-ref inputs "gcc:lib"))
-                        (define ld.so
-                          (string-append libc ,(glibc-dynamic-linker)))
-                        (define rpath
-                          (string-join (list "$ORIGIN"
-                                             (string-append out "/lib")
-                                             (string-append out "/nvvm/lib64")
-                                             (string-append libc "/lib")
-                                             (string-append gcc-lib "/lib"))
-                                       ":"))
-
-                        (define (patch-elf file)
-                          (unless (string-contains file ".so")
-                            (format #t "Setting interpreter on '~a'...~%" file)
-                            (invoke "patchelf" "--set-interpreter" ld.so
-                                    file))
-                          (format #t "Setting RPATH on '~a'...~%" file)
-                          (invoke "patchelf" "--set-rpath" rpath
-                                  "--force-rpath" file))
-
-                        (for-each (lambda (file)
-                                    (when (elf-file? file)
-                                      (patch-elf file)))
-                                  '("nvidia-installer" "nvidia-smi" "nvidia-settings"))
-
-                        (for-each (lambda (file)
-                                    (when (elf-file? file)
-                                      (patch-elf file)))
-                                  (find-files "."
-                                              (lambda (file stat)
-                                                (and (eq? 'regular
-                                                          (stat:type stat))
-                                                     (string-contains file ".so")))))
                         ;; FIXME why pwd always output -0 instead of
                         ;; -1/2/3...? The number seems to increase for
                         ;; newer builds
+                        
+                        ;; I cannot use with-directory-excursion,
+                        ;; because the install phase needs to be in
+                        ;; the kernel folder. Otherwise no .ko would
+                        ;; be installed
                         (chdir "kernel")
                         ;; patch Kbuild
                         (substitute* "Kbuild"
@@ -141,92 +110,122 @@
                     (add-after 'install 'install-copy
                       (lambda* (#:key inputs native-inputs outputs #:allow-other-keys)
                         (chdir "..")
+                        ;; for scandir
+                        (use-modules (ice-9 ftw)
+                                     (ice-9 regex))
                         (let* ((out (assoc-ref outputs "out"))
                                (moddir (string-append out "/lib/xorg/modules/drivers/"))
                                (bindir (string-append out "/bin")))
                           (mkdir-p moddir)
                           (mkdir-p bindir)
+                          ;; ------------------------------
+                          ;; Copy .so files
                           (for-each
-                           (lambda (name)
-                             (format #t "Copying '~a'...~%" name)
-                             (invoke "pwd")
-                             (display name)
-                             (invoke "ls")
-                             (copy-file name
-                                        (string-append moddir name)))
-                           ;; FIXME scan all .so.X files
-                           '("nvidia_drv.so"
-                             "libglxserver_nvidia.so.435.21"
-                             "libGLX.so.0"
-                             "libGLX_nvidia.so.435.21")
+                           (lambda (file)
+                             (format #t "Copying '~a'...~%" file)
+                             (install-file file moddir))
+                           (scandir "." (lambda (name)
+                                          (string-contains name ".so"))))
 
-                           ;; FIXME I should not use find-files for
-                           ;; this, as 1. the name is not clean,
-                           ;; containing leading ./ 2. it is recursive
-                           ;;
-                           ;; (find-files "."
-                           ;;            (lambda (file stat)
-                           ;;              (and (eq? 'regular
-                           ;;                        (stat:type stat))
-                           ;;                   (string-contains file ".so.")))
-                           ;;            #:directories? #f)
-
-
-                           ;; FIXME why scandir is not available in the build environment
-                           ;;
-                           ;; FIXME why there is so little
-                           ;; documemtation about using argumentss,
-                           ;; where I wrote most of the packaging
-                           ;; code? What is the relation with G-exp?
-                           ;;
-                           ;; (with-imported-modules '((guix build utils)))
-                           ;; (scandir "." (lambda (name)
-                           ;;                (string-contains name ".so")))
-                           )
+                          ;; ------------------------------
+                          ;; Create short name symbolic links
+                          (for-each (lambda (file)
+                                      (let* ((short (regexp-substitute
+                                                     #f
+                                                     (string-match "([^/]*\\.so).*" file)
+                                                     1))
+                                             (major (if (or (string=? short "libEGL.so")
+                                                            (string=? short "libEGL_nvidia.so")
+                                                            (string=? short "libGLX.so")
+                                                            (string=? short "libGLX_nvidia.so"))
+                                                        "0" "1"))
+                                             (mid (string-append short "." major))
+                                             (short-file (string-append moddir "/" short))
+                                             (mid-file (string-append moddir "/" mid)))
+                                        ;; FIXME the same name, print out warning at least
+                                        ;; [X] libEGL.so.1.1.0
+                                        ;; [ ] libEGL.so.435.21
+                                        (when (not (file-exists? short-file))
+                                          (format #t "Linking ~a to ~a ...~%" short file)
+                                          (link file short-file))
+                                        (when (not (file-exists? mid-file))
+                                          (format #t "Linking ~a to ~a ...~%" mid file)
+                                          (link file mid-file))))
+                                    (find-files moddir "\\.so"))
 
                           ;; Xorg seems to look for libglx.so
+                          ;; It is not "libGLX.so.0"
                           (link (string-append moddir "libglxserver_nvidia.so.435.21")
                                 (string-append moddir "libglx.so"))
 
-                          ;; (copy-file "libGLX.so.0"
-                          ;;            (string-append moddir "libglx.so"))
-                          (copy-file "nvidia-settings"
-                                     (string-append bindir "/nvidia-settings"))
-                          (copy-file "nvidia-smi"
-                                     (string-append bindir "/nvidia-smi"))
-                          ;; TODO add a file to load nvidia drivers
+                          ;; ------------------------------
+                          ;; Binary files
+                          (install-file "nvidia-smi" bindir)
+                          ;; the runpath does not seem to work, xmi uses system ld, and seems to work
+                          (copy-file "nvidia-smi" (string-append bindir "/nvidia-xmi"))
+                          ;; This cannot pass validate_runpath with weird errors
+                          ;; (install-file "nvidia-settings" bindir)
 
+                          ;; ------------------------------
+                          ;; Add a file to load nvidia drivers
+                          (let ((file (string-append bindir "/nvidia-insmod")))
+                            (call-with-output-file file
+                              (lambda (port)
+                                (display (string-append "#!" (assoc-ref inputs "bash-minimal") "/bin/sh" "\n") port)
+                                (display (string-append "modprobe ipmi_devintf" "\n") port)
+                                (display (string-append "export LINUX_MODULE_DIRECTORY="
+                                                        (string-append out "/lib/modules") "\n")
+                                         port)
+                                (for-each (lambda (mod)
+                                            (display (string-append "modprobe " mod "\n") port))
+                                          ;; nvidia-drm cannot be loaded
+                                          '("nvidia" "nvidia-modeset" "nvidia-uvm"))))
+                            (chmod file #o555))
+                          (let ((file (string-append bindir "/nvidia-rmmod")))
+                            (call-with-output-file file
+                              (lambda (port)
+                                (display (string-append "#!" (assoc-ref inputs "bash-minimal") "/bin/sh" "\n") port)
+                                (for-each (lambda (mod)
+                                            (display (string-append "rmmod " mod "\n") port))
+                                          '("nvidia-uvm" "nvidia-modeset" "nvidia" "ipmi_devintf"))))
+                            (chmod file #o555))
+
+                          ;; ------------------------------
                           ;; patchelf
-                          ;; verify by ldd xxx.so
                           (let* ((libc (assoc-ref inputs "libc"))
                                  (ld.so (string-append libc ,(glibc-dynamic-linker)))
-                                 (gcc-lib (assoc-ref inputs "gcc:lib"))
-                                 (libx11 (assoc-ref inputs "libx11"))
+                                 
                                  (out (assoc-ref outputs "out"))
-                                 (rpath (string-join (list "$ORIGIN"
-                                                           (string-append out "/lib")
-                                                           (string-append libc "/lib")
-                                                           (string-append libx11 "/lib")
-                                                           (string-append gcc-lib "/lib"))
-                                                     ":")))
+                                 (rpath (string-join
+                                         (list "$ORIGIN"
+                                               (string-append out "/lib")
+                                               (string-append libc "/lib")
+                                               (string-append (assoc-ref inputs "libx11") "/lib")
+                                               (string-append (assoc-ref inputs "libxext") "/lib")
+                                               (string-append (assoc-ref inputs "pango") "/lib")
+                                               (string-append (assoc-ref inputs "gtk+") "/lib")
+                                               (string-append (assoc-ref inputs "gtk2") "/lib")
+                                               (string-append (assoc-ref inputs "atk") "/lib")
+                                               (string-append (assoc-ref inputs "glib") "/lib")
+                                               (string-append (assoc-ref inputs "cairo") "/lib")
+                                               (string-append (assoc-ref inputs "gdk-pixbuf") "/lib")
+                                               (string-append (assoc-ref inputs "wayland") "/lib")
+                                               (string-append (assoc-ref inputs "gcc:lib") "/lib"))
+                                         ":")))
                             (define (patch-elf file)
-                              (if (string-contains file ".so")
-                                  (invoke "patchelf" "--set-rpath" rpath file)
-                                  (invoke "patchelf" "--set-interpreter" ld.so file)))
+                              (format #t "Patching ~a ...~%" file)
+                              (unless (string-contains file ".so")
+                                (invoke "patchelf" "--set-interpreter" ld.so file))
+                              (invoke "patchelf" "--set-rpath" rpath file))
                             (for-each (lambda (file)
                                         (when (elf-file? file)
                                           (patch-elf file)))
-                                      (append (find-files (string-append out "/lib/xorg")
-                                                          (lambda (file stat)
-                                                            (and (eq? 'regular
-                                                                      (stat:type stat)))))
-                                              (find-files (string-append out "/bin")
-                                                          (lambda (file stat)
-                                                            (and (eq? 'regular
-                                                                      (stat:type stat)))))))))
+                                      (find-files (string-append out "/lib/xorg")
+                                                  (lambda (file stat)
+                                                    (and (eq? 'regular
+                                                              (stat:type stat))))))
+                            (patch-elf (string-append out "/bin/nvidia-smi"))))
                         #t))
-                    ;; FIXME The runpath validation failed
-                    (delete 'validate-runpath)
                     )))
       (native-inputs
        `(("patchelf" ,patchelf)
@@ -243,6 +242,16 @@
        `(("gcc:lib" ,gcc "lib")
          ("libc" ,glibc)
          ("libx11" ,libx11)
+         ("libxext" ,libxext)
+         ("pango" ,pango)
+         ("gtk+" ,gtk+)
+         ("gdk-pixbuf" ,gdk-pixbuf)
+         ("gtk2" ,gtk+-2)
+         ("cairo" ,cairo)
+         ("kmod" ,kmod)
+         ("wayland" ,wayland)
+         ("atk" ,atk)
+         ("glib" ,glib)
          ("bash-minimal" ,bash-minimal)
          ("linux-libre" ,linux-libre)))
       (home-page "https://www.nvidia.com")

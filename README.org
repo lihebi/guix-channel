@@ -43,6 +43,26 @@ Looks like I have to have:
 
 The linux-libre-headers is not enough. I need the kernel source tree.
 
+** Nix
+
+#+begin_example
+ libname_short=`echo -n "$libname" | sed 's/so\..*/so/'`
+
+      if [[ "$libname" != "$libname_short" ]]; then
+        ln -srnf "$libname" "$libname_short"
+      fi
+
+      if [[ $libname_short =~ libEGL.so || $libname_short =~ libEGL_nvidia.so || $libname_short =~ libGLX.so || $libname_short =~ libGLX_nvidia.so ]]; then
+          major=0
+      else
+          major=1
+      fi
+
+      if [[ "$libname" != "$libname_short.$major" ]]; then
+        ln -srnf "$libname" "$libname_short.$major"
+      fi`*'`
+#+end_example
+
 ** TODO amdgpu?
 OpenCL vs. Cuda
 
@@ -52,17 +72,20 @@ OpenCL vs. Cuda
 - packaing tutorail https://guix.gnu.org/blog/2018/a-packaging-tutorial-for-guix/
 - nvidia installer source: https://download.nvidia.com/XFree86/nvidia-installer/
 
-** TODO patchelf all .so and bins
+** DONE patchelf all .so and bins
+   CLOSED: [2019-09-13 Fri 16:56]
 so that I don't need:
 
 #+begin_example
 export LD_LIBRARY_PATH=/home/hebi/.guix-profile/lib:/usr/lib:$LD_LIBRARY_PATH
 #+end_example
 
-** TODO validate the patchelf using dll
+** DONE validate the patchelf using dll
+   CLOSED: [2019-09-13 Fri 16:56]
 - libx11
 - all .so files
-** TODO enable validation phase
+** DONE enable validation phase
+   CLOSED: [2019-09-13 Fri 16:56]
 ** TODO if I manually load kernel, can I start X
 There is only one error:
 
@@ -77,43 +100,26 @@ but it is not starting a proper WM?  I would try gdm.
 
 ** TODO load kernel module automatically
 LINUX_MODULE_DIRECTORY, I don't think it is possible. How Nix did it?
-** TODO generate a script for loading kernel modules
+** TODO load module manually at system startup
+- before X tries to load it
+- as a service?
+
+** DONE generate a script for loading kernel modules
+   CLOSED: [2019-09-14 Sat 18:33]
 ** TODO test whether I can use cuda
 If the I finally cannot make the Xorg work
 
+** (2017 GPCE) Code staging in GNU Guix
 
-* Email
-
-Hi Guix,
-
-I'm trying to packaging tigervnc [1], a VNC viewer/server. There are
-several tricky parts that I don't know how to proceed yet.
-
-According to the building instruction [2], the process is as follows:
-1. copies the xorg-server source code under its sub folder
-2. apply different patches [3] to the xorg-srever code based on the
-versions
-3. run `autoreconf' and `configure' script with font, XKB, DRI
-directories as argument.
-
-My questions are:
-
-1. How should we get the correct xorg-server code? My thinking: put
-xorg-server as 'propagated-inputs', get the version of xorg-server, get
-the uri, download it. Or just copy it from existing gnu/store?
-2. 
-
-From what I understand, this creates the following difficulties for
-packaging:
-1. we need to get the current xorg-server version, and download (or
-copy?) the source code
-2. font, XKB, DRI directories as argument.
-
-
-
-At the end
-
-[1] https://tigervnc.org
-[2] https://github.com/TigerVNC/tigervnc/blob/master/BUILDING.txt#L97
-[3] https://github.com/TigerVNC/tigervnc/tree/master/unix,
-xserver18.patch, xserver19.patch, xserver120.patch, etc.
+#+begin_example
+@article{courtes2017code,
+  title={Code staging in GNU Guix},
+  author={Court{\`e}s, Ludovic},
+  journal={ACM SIGPLAN Notices},
+  volume={52},
+  number={12},
+  pages={41--48},
+  year={2017},
+  publisher={ACM}
+}
+#+end_example
