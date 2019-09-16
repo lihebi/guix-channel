@@ -52,9 +52,45 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages xorg)
+  #:use-module (gnu services)
+  #:use-module (gnu services shepherd)
+  #:use-module (guix gexp)
   #:use-module (ice-9 match)
   #:use-module (ice-9 regex)
-  #:use-module (srfi srfi-1))
+  #:use-module (srfi srfi-1)
+  #:export (nvidia-insmod-service-type))
+
+(define (nvidia-insmod-shepherd-service config)
+  (list (shepherd-service
+         (provision '(nvidia-insmod))
+         (requirement '())
+         ;; run the nvidia-insmod script
+         ;; or just run the modprobe or insmod here?
+         (start #~(make-forkexec-constructor
+                   (list (string-append #$nvidia-driver "/bin/nvidia-insmod"))))
+         ;; I probably don't need stop. The stop seems not to be
+         ;; called anyway when one-shot is true
+         ;;
+         ;; (stop #~(make-forkexec-destructor
+         ;;          (list (string-append #$nvidia-driver "/bin/nvidia-rmmod"))))
+         ;;
+         ;; looks like I have to have a stop procedure, otherwise the
+         ;; start is never called.
+         ;; (stop #~(make-kill-destructor))
+         ;; (stop #~(const #f))
+         (one-shot? #t)
+         ;; FIXME When the system boot, starting nvidia-insmod does
+         ;; not seem to have any effect. Only when I reconfigure the
+         ;; system, the service seems to work.
+         (auto-start? #f)
+         (respawn? #f))))
+
+(define nvidia-insmod-service-type
+  (service-type
+   (name 'nvidia-insmod-name)
+   (extensions
+    (list (service-extension shepherd-root-service-type nvidia-insmod-shepherd-service)))
+   (default-value '())))
 
 (define-public nvidia-driver
   (let ((hello "xxxxxx"))
@@ -114,49 +150,28 @@
                         (use-modules (ice-9 ftw)
                                      (ice-9 regex))
                         (let* ((out (assoc-ref outputs "out"))
-                               (moddir (string-append out "/lib/xorg/modules/drivers/"))
+                               (libdir (string-append out "/lib"))
                                (bindir (string-append out "/bin")))
-                          (mkdir-p moddir)
-                          (mkdir-p bindir)
                           ;; ------------------------------
                           ;; Copy .so files
                           (for-each
                            (lambda (file)
                              (format #t "Copying '~a'...~%" file)
-                             (install-file file moddir))
+                             (install-file file libdir))
                            (scandir "." (lambda (name)
                                           (string-contains name ".so"))))
 
-                          ;; ------------------------------
-                          ;; Create short name symbolic links
-                          (for-each (lambda (file)
-                                      (let* ((short (regexp-substitute
-                                                     #f
-                                                     (string-match "([^/]*\\.so).*" file)
-                                                     1))
-                                             (major (if (or (string=? short "libEGL.so")
-                                                            (string=? short "libEGL_nvidia.so")
-                                                            (string=? short "libGLX.so")
-                                                            (string=? short "libGLX_nvidia.so"))
-                                                        "0" "1"))
-                                             (mid (string-append short "." major))
-                                             (short-file (string-append moddir "/" short))
-                                             (mid-file (string-append moddir "/" mid)))
-                                        ;; FIXME the same name, print out warning at least
-                                        ;; [X] libEGL.so.1.1.0
-                                        ;; [ ] libEGL.so.435.21
-                                        (when (not (file-exists? short-file))
-                                          (format #t "Linking ~a to ~a ...~%" short file)
-                                          (link file short-file))
-                                        (when (not (file-exists? mid-file))
-                                          (format #t "Linking ~a to ~a ...~%" mid file)
-                                          (link file mid-file))))
-                                    (find-files moddir "\\.so"))
 
+                          ;; xorg files
+                          (install-file "nvidia_drv.so" (string-append out "/lib/xorg/modules/drivers/"))
+                          (install-file "libglxserver_nvidia.so.435.21" (string-append out "/lib/xorg/modules/extensions/"))
                           ;; Xorg seems to look for libglx.so
                           ;; It is not "libGLX.so.0"
-                          (link (string-append moddir "libglxserver_nvidia.so.435.21")
-                                (string-append moddir "libglx.so"))
+                          ;;
+                          ;; FIXME even if I enable this, it still not working, libwrast not found, etc
+                          ;;
+                          ;; (link (string-append moddir "libglxserver_nvidia.so.435.21")
+                          ;;       (string-append moddir "libglx.so"))
 
                           ;; ------------------------------
                           ;; Binary files
@@ -220,11 +235,36 @@
                             (for-each (lambda (file)
                                         (when (elf-file? file)
                                           (patch-elf file)))
-                                      (find-files (string-append out "/lib/xorg")
-                                                  (lambda (file stat)
-                                                    (and (eq? 'regular
-                                                              (stat:type stat))))))
-                            (patch-elf (string-append out "/bin/nvidia-smi"))))
+                                      (find-files out  ".*\\.so"))
+                            (patch-elf (string-append out "/bin/nvidia-smi")))
+
+                          ;; ------------------------------
+                          ;; Create short name symbolic links
+                          (for-each (lambda (file)
+                                      (let* ((short (regexp-substitute
+                                                     #f
+                                                     (string-match "([^/]*\\.so).*" file)
+                                                     1))
+                                             (major (if (or (string=? short "libEGL.so")
+                                                            (string=? short "libEGL_nvidia.so")
+                                                            (string=? short "libGLX.so")
+                                                            (string=? short "libGLX_nvidia.so"))
+                                                        "0" "1"))
+                                             (mid (string-append short "." major))
+                                             (short-file (string-append libdir "/" short))
+                                             (mid-file (string-append libdir "/" mid)))
+                                        ;; FIXME the same name, print out warning at least
+                                        ;; [X] libEGL.so.1.1.0
+                                        ;; [ ] libEGL.so.435.21
+                                        (when (not (file-exists? short-file))
+                                          (format #t "Linking ~a to ~a ...~%" short file)
+                                          (symlink (basename file) short-file))
+                                        (when (not (file-exists? mid-file))
+                                          (format #t "Linking ~a to ~a ...~%" mid file)
+                                          (symlink (basename file) mid-file))))
+                                    (find-files libdir "\\.so\\."))
+                          (symlink "libglxserver_nvidia.so.435.21"
+                                   (string-append out "/lib/xorg/modules/extensions/" "libglxserver_nvidia.so")))
                         #t))
                     )))
       (native-inputs
