@@ -39,10 +39,12 @@
              ("libxrandr" ,libxrandr)
              ("libxdamage" ,libxdamage)))
    (propagated-inputs `(("xauth" ,xauth)))
+   ;; This only builds vncviewer
    (build-system cmake-build-system)
    (arguments
     `(#:tests? #f))
    (home-page "https://tigervnc.org")
    (synopsis "TODO")
    (description "TODO")
-   (license license:gpl2)))
+   ;; TODO license
+   (license #f)))
