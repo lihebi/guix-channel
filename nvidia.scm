@@ -58,7 +58,8 @@
   #:use-module (ice-9 match)
   #:use-module (ice-9 regex)
   #:use-module (srfi srfi-1)
-  #:export (nvidia-insmod-service-type))
+  #:export (nvidia-insmod-service-type
+            hello-service-type))
 
 (define (nvidia-insmod-shepherd-service config)
   (list (shepherd-service
@@ -90,6 +91,23 @@
    (name 'nvidia-insmod-name)
    (extensions
     (list (service-extension shepherd-root-service-type nvidia-insmod-shepherd-service)))
+   (default-value '())))
+
+(define (hello-shepherd-service config)
+  (list (shepherd-service
+         (provision '(hello))
+         (requirement '())
+         (start #~(make-forkexec-constructor
+                   (list "touch" "/tmp/hello")))
+         (one-shot? #t)
+         (auto-start? #f)
+         (respawn? #f))))
+
+(define hello-service-type
+  (service-type
+   (name 'hello)
+   (extensions
+    (list (service-extension shepherd-root-service-type hello-shepherd-service)))
    (default-value '())))
 
 (define-public nvidia-driver
