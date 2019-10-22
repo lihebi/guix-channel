@@ -12,21 +12,9 @@ To use this channel, put =$HOME/.config/guix/channels.scm= the following:
 
 * Nvidia Driver
 
-- https://github.com/Millak
-- https://github.com/rekado
-
-rekado
-- https://github.com/BIMSBbioinfo/guix-bimsb-nonfree
 
 Nvidia
 - https://git.archlinux.org/svntogit/packages.git/tree/trunk/PKGBUILD?h=packages/nvidia
-
-pkill9's guix config and packages:
-- https://miha.info/guix-fhs-service/
-- https://gitlab.com/pkill-9
-- https://gitlab.com/pkill-9/guix-config
-- https://gitlab.com/pkill-9/guix-packages-nonfree
-- https://gitlab.com/pkill-9/guix-packages-free
 
 Nix:
 - https://github.com/NixOS/nixpkgs/tree/bd6ba87381ef6274a830253b60e481209d4d7c7d/pkgs/os-specific/linux/nvidia-x11
@@ -174,3 +162,43 @@ If the I finally cannot make the Xorg work
   publisher={ACM}
 }
 #+end_example
+
+* More user guix package repos
+
+Efraim Flashner
+- github @Millak: https://github.com/Millak
+- guix channel https://github.com/Millak/my-guix
+- guix config https://github.com/Millak/guix-config
+
+Julien Lepiller
+- framagit @tyreunom https://framagit.org/tyreunom
+- guix channel https://framagit.org/tyreunom/guix-more
+- guix channel https://framagit.org/tyreunom/maven-build-channel
+- A very interesting project to make home directory read-only:
+  https://framagit.org/tyreunom/guix-home-manager
+
+
+rekado
+- github @rekado: https://github.com/rekado
+- guix channel https://github.com/BIMSBbioinfo/guix-bimsb-nonfree
+- guix channel https://github.com/BIMSBbioinfo/guix-bimsb
+
+pkill9
+- gitlab: https://gitlab.com/pkill-9
+- blog: https://miha.info/guix-fhs-service/
+  - seems to be the same site https://pkill-9.gitlab.io/
+- config: https://gitlab.com/pkill-9/guix-config
+- channel https://gitlab.com/pkill-9/guix-packages-nonfree
+- channel https://gitlab.com/pkill-9/guix-packages-free
+
+Pjotr Prins
+- github @pjotrp https://github.com/pjotrp
+- notes: https://github.com/pjotrp/guix-notes
+
+Jiaming Yuan
+- web https://trivialfis.github.io/
+- githug @trivialfis https://github.com/trivialfis
+- channel https://github.com/trivialfis/guixpkgs
+- emacs config https://github.com/trivialfis/Foci-Emacs
+- guix-conda forked from fredmanglis/guix-conda https://github.com/pjotrp/guix-conda
+- a interesting project: https://gitlab.com/pjotrp/guix-relocatable-binary-packages
