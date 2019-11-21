@@ -1,0 +1,34 @@
+#!/bin/bash
+
+export GUIX_PACKAGE_PATH="$HOME/git/guix-channel/"
+# export GUIX_PACKAGE_PATH="$GUIX_PACKAGE_PATH:$HOME/git/reading/guix-bimsb-nonfree/"
+
+export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
+
+# This is important: the emacs and elisp info files appear only here
+# export INFOPATH="$HOME/.guix-profile/share/info${INFOPATH:+:}$INFOPATH"
+
+# The above profile set XDG_DATA_DIRS. However, in case of using
+# arch and guix together, I install gnome using pacman, and I must
+# set this back, otherwise, gnome does not start, and browser
+# cannot open upload dialog.
+# export XDG_DATA_DIRS="/usr/local/share:/usr/share:$XDG_DATA_DIRS"
+# source "$HOME/.config/guix/current/etc/profile"
+
+# This is the current guix binary resulted from guix pull. Keep this
+# at the front of the list
+# export PATH="$HOME/.config/guix/current/bin:$PATH"
+# export INFOPATH="$HOME/.config/guix/current/share/info:$INFOPATH"
+# Using this will make commands such as ls, python3 segment fault
+# export LD_LIBRARY_PATH="/home/hebi/.guix-profile/lib"
+#
+# HACK I have to hack to use the gcc-...-lib/lib/libstdc++.so.6 so
+# that python from scipy import sparse (and some others like
+# jupyter notebook) will work
+
+GUIX_PROFILE="$HOME/.guix-profile"
+source "$GUIX_PROFILE/etc/profile"
+
+# set the path to the pull
+export PATH="$HOME/.config/guix/current/bin:$PATH"
+export INFOPATH="$HOME/.config/guix/current/share/info:$INFOPATH"

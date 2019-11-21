@@ -1,0 +1,56 @@
+#+TITLE: Implementation notes
+
+* TODO-list
+
+** TODO custom linux kernel
+** TODO nvidia driver
+** TODO non-free wifi firmware
+
+* Packages not in package.scm
+
+More importantly, there are some packages that are too large or too
+specific to install here, e.g. texlive, tensorflow, or non-free
+softwares such as cuda. And it is not possible to maintain two files,
+because =guix package -m= replace the system. So, I'm going to install
+from package.scm once at setup, and install the following list on
+demand:
+
+- tensorflow
+- cuda
+- texlive
+- ungoogled-chromium
+- "kicad" "kicad-symbols" 
+- "kicad-library" is 4.x
+- "libreoffice"
+- '("llvm" "clang")
+- icecat
+- "qemu"
+
+Other packages:
+- "ristretto": an image viewer
+- "cool-retro-term"                   ; not working, when it's working, huge resource consumption
+- "kitty"                             ; not working due to opengl issue
+
+
+I probably want to avoid upgrade these packages so often.
+
+Some packages needs specific channels. my channel
+https://github.com/lihebi/guix-channel.git:
+- cl-clx-truetype
+- sbcl-zpng
+
+** Some packages are broken from now to then
+
+- racket
+- ghc
+- vinagre
+- flameshot
+
+** TODO ungoogled-chromium is failing to compile
+Thus I'm not able to instatiate the package manifest.
+
+* Back
+
+require channel https://gitlab.com/mbakke/guix-chromium.git
+
+

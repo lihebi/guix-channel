@@ -1,0 +1,31 @@
+#+TITLE: Setting up Guix System Distribution
+
+Install the system
+
+#+begin_example
+sudo -E guix system reconfigure config.scm
+#+end_example
+
+Install packages
+
+#+begin_example
+guix package -m package.scm
+#+end_example
+
+This command will make sure the system contains these *and only* these packages.
+
+My custom channels for some extra packages:
+
+#+BEGIN_SRC lisp
+(cons*
+ (channel
+  (name 'guix-channel-hebi)
+  (url "https://github.com/lihebi/guix-channel.git")
+  (branch "master"))
+ %default-channels)
+#+END_SRC
+
+
+For local development, glone the package to say =$HOME/git/guix-channel=, and
+set it to =GUIX_PACKAGE_PATH=. If no error, =guix package -i= should see the
+package.
