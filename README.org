@@ -85,58 +85,85 @@ In summary, your config.scm should look like this:
    %desktop-services)))
 #+END_SRC
 
+It is NOT working.
 
-It is NOT working, the log of gdm:
+** error messages
+The log of gdm:
 
 #+begin_example
-(II) systemd-logind: took control of session /org/freedesktop/login1/session/c1                                                                                                                                                                                
-(--) PCI:*(11@0:0:0) 10de:1c02:3842:6160 rev 161, Mem @ 0xfc000000/16777216, 0xe0000000/268435456, 0xf0000000/33554432, I/O @ 0x0000e000/128, BIOS @ 0x????????/131072                                                                                         
-(WW) Open ACPI failed (/var/run/acpid.socket) (No such file or directory)                                                                                                                                                                                      
-(II) LoadModule: "glx"                                                                                                                                                                                                                                         
-(II) Loading /gnu/store/jg3v03qjrli8sb5dqyvs49h75d33hqmx-xorg-server-1.20.5/lib/xorg/modules/extensions/libglx.so                                                                                                                                              
-(II) Module glx: vendor="X.Org Foundation"                                                                                                                                                                                                                     
-        compiled for 1.20.5, module version = 1.0.0                                                                                                                                                                                                            
-        ABI class: X.Org Server Extension, version 10.0                                                                                                                                                                                                        
-(II) LoadModule: "nvidia"                                                                                                                                                                                                                                      
-(II) Loading /gnu/store/aqgdk6j3nlk2qw1i0zzvwkblqpiyayfl-nvidia-driver-435.21/lib/xorg/modules/drivers/nvidia_drv.so                                                                                                                                           
-(II) Module nvidia: vendor="NVIDIA Corporation"                                                                                                                                                                                                                
-        compiled for 1.6.99.901, module version = 1.0.0                                                                                                                                                                                                        
-        Module class: X.Org Video Driver                                                                                                                                                                                                                       
-(II) NVIDIA dlloader X Driver  435.21  Sun Aug 25 08:17:08 CDT 2019                                                                                                                                                                                            
-(II) NVIDIA Unified Driver for all Supported NVIDIA GPUs                                                                                                                                                                                                       
-xf86EnableIOPorts: failed to set IOPL for I/O (Operation not permitted)                                                                                                                                                                                        
-(II) Loading sub module "fb"                                                                                                                                                                                                                                   
-(II) LoadModule: "fb"                                                                                                                                                                                                                                          
-(II) Loading /gnu/store/jg3v03qjrli8sb5dqyvs49h75d33hqmx-xorg-server-1.20.5/lib/xorg/modules/libfb.so                                                                                                                                                          
-(II) Module fb: vendor="X.Org Foundation"                                                                                                                                                                                                                      
-        compiled for 1.20.5, module version = 1.0.0                                                                                                                                                                                                            
-        ABI class: X.Org ANSI C Emulation, version 0.4                                                                                                                                                                                                         
-(II) Loading sub module "wfb"                                                                                                                                                                                                                                  
-(II) LoadModule: "wfb"                                                                                                                                                                                                                                         
-(II) Loading /gnu/store/jg3v03qjrli8sb5dqyvs49h75d33hqmx-xorg-server-1.20.5/lib/xorg/modules/libwfb.so                                                                                                                                                         
-(II) Module wfb: vendor="X.Org Foundation"                                                                                                                                                                                                                     
-        compiled for 1.20.5, module version = 1.0.0                                                                                                                                                                                                            
-        ABI class: X.Org ANSI C Emulation, version 0.4                                                                                                                                                                                                         
-(II) Loading sub module "ramdac"                                                                                                                                                                                                                               
-(II) LoadModule: "ramdac"                                                                                                                                                                                                                                      
-(II) Module "ramdac" already built-in                                                                                                                                                                                                                          
-(EE) NVIDIA: Failed to initialize the NVIDIA kernel module. Please see the                                                                                                                                                                                     
-(EE) NVIDIA:     system's kernel log for additional error messages and                                                                                                                                                                                         
-(EE) NVIDIA:     consult the NVIDIA README for details.                                                                                                                                                                                                        
-(EE) No devices detected.                                                                                                                                                                                                                                      
-(EE)                                                                                                                                                                                                                                                           
-Fatal server error:                                                                                                                                                                                                                                            
-(EE) no screens found(EE)                                                                                                                                                                                                                                      
-(EE)                                                                                                                                                                                                                                                           
-Please consult the The X.Org Foundation support                                                                                                                                                                                                                
-         at http://wiki.x.org                                                                                                                                                                                                                                  
- for help.                                                                                                                                                                                                                                                     
-(EE) Please also check the log file at "/var/lib/gdm/.local/share/xorg/Xorg.0.log" for additional information.                                                                                                                                                 
-(EE)                                                                                                                                                                                                                                                           
-(EE) Server terminated with error (1). Closing log file.                                                                                                                                                                                                       
+(II) systemd-logind: took control of session /org/freedesktop/login1/session/c1
+(--) PCI:*(11@0:0:0) 10de:1c02:3842:6160 rev 161, Mem @ 0xfc000000/16777216, 0xe0000000/268435456, 0xf0000000/33554432, I/O @ 0x0000e000/128, BIOS @ 0x????????/131072
+(WW) Open ACPI failed (/var/run/acpid.socket) (No such file or directory)
+(II) LoadModule: "glx"
+(II) Loading /gnu/store/jg3v03qjrli8sb5dqyvs49h75d33hqmx-xorg-server-1.20.5/lib/xorg/modules/extensions/libglx.so
+(II) Module glx: vendor="X.Org Foundation"
+        compiled for 1.20.5, module version = 1.0.0
+        ABI class: X.Org Server Extension, version 10.0
+(II) LoadModule: "nvidia"
+(II) Loading /gnu/store/aqgdk6j3nlk2qw1i0zzvwkblqpiyayfl-nvidia-driver-435.21/lib/xorg/modules/drivers/nvidia_drv.so
+(II) Module nvidia: vendor="NVIDIA Corporation"
+        compiled for 1.6.99.901, module version = 1.0.0
+        Module class: X.Org Video Driver
+(II) NVIDIA dlloader X Driver  435.21  Sun Aug 25 08:17:08 CDT 2019
+(II) NVIDIA Unified Driver for all Supported NVIDIA GPUs
+xf86EnableIOPorts: failed to set IOPL for I/O (Operation not permitted)
+(II) Loading sub module "fb"
+(II) LoadModule: "fb"
+(II) Loading /gnu/store/jg3v03qjrli8sb5dqyvs49h75d33hqmx-xorg-server-1.20.5/lib/xorg/modules/libfb.so
+(II) Module fb: vendor="X.Org Foundation"
+        compiled for 1.20.5, module version = 1.0.0
+        ABI class: X.Org ANSI C Emulation, version 0.4
+(II) Loading sub module "wfb"
+(II) LoadModule: "wfb"
+(II) Loading /gnu/store/jg3v03qjrli8sb5dqyvs49h75d33hqmx-xorg-server-1.20.5/lib/xorg/modules/libwfb.so
+(II) Module wfb: vendor="X.Org Foundation"
+        compiled for 1.20.5, module version = 1.0.0
+        ABI class: X.Org ANSI C Emulation, version 0.4
+(II) Loading sub module "ramdac"
+(II) LoadModule: "ramdac"
+(II) Module "ramdac" already built-in
+(EE) NVIDIA: Failed to initialize the NVIDIA kernel module. Please see the
+(EE) NVIDIA:     system's kernel log for additional error messages and
+(EE) NVIDIA:     consult the NVIDIA README for details.
+(EE) No devices detected.
+(EE)
+Fatal server error:
+(EE) no screens found(EE)
+(EE)
+Please consult the The X.Org Foundation support
+         at http://wiki.x.org
+ for help.
+(EE) Please also check the log file at "/var/lib/gdm/.local/share/xorg/Xorg.0.log" for additional information.
+(EE)
+(EE) Server terminated with error (1). Closing log file.
 Unable to run X server
 #+end_example
 
 It looks like nvidia kernel modules are loaded, but failed to initialize. Maybe
 it is the xorg-conf problem, or more likely to be some missing part during the
 packing of nvidia drivers.
+
+The dmesg looks like:
+
+#+begin_example
+[   14.929322] nvidia: loading out-of-tree module taints kernel.
+[   14.929330] nvidia: module license 'NVIDIA' taints kernel.
+[   14.929331] Disabling lock debugging due to kernel taint
+[   15.039142] nvidia-nvlink: Unregistered the Nvlink Core, major device number 243
+[   15.158543] nvidia-nvlink: Nvlink Core is being initialized, major device number 243
+[   15.158887] NVRM: The NVIDIA probe routine was not called for 1 device(s).
+[   15.158888] NVRM: This can occur when a driver such as:
+               NVRM: nouveau, rivafb, nvidiafb or rivatv
+               NVRM: was loaded and obtained ownership of the NVIDIA device(s).
+[   15.158888] NVRM: Try unloading the conflicting kernel module (and/or
+               NVRM: reconfigure your kernel without the conflicting
+               NVRM: driver(s)), then try loading the NVIDIA kernel module
+               NVRM: again.
+[   15.158889] NVRM: No NVIDIA devices probed.
+[   15.158989] nvidia-nvlink: Unregistered the Nvlink Core, major device number 243
+[   15.391697] 0000:0a:00.0: Missing Free firmware (non-Free firmware loading is disabled)
+[   15.391718] r8169 0000:0a:00.0: Unable to load firmware /*(DEBLOBBED)*/ (-2)
+#+end_example
+
+The linux-libre seems to prevent NVIDIA module from loading. Unfortunately the
+linux kernel from nongnu failed to compile.
