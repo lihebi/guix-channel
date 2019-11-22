@@ -1,4 +1,4 @@
-(define-module (nvidia)
+(define-module (guix packages nvidia)
   #:use-module (gnu packages)
   #:use-module (gnu packages lisp)
   #:use-module ((guix licenses) #:prefix license:)
@@ -11,7 +11,6 @@
   #:use-module (guix git-download)
   #:use-module (guix hg-download)
   #:use-module (guix utils)
-  ;; #:use-module (guix build utils)
 
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system asdf)
@@ -57,60 +56,7 @@
   #:use-module (guix gexp)
   #:use-module (ice-9 match)
   #:use-module (ice-9 regex)
-  #:use-module (srfi srfi-1)
-  #:export (nvidia-insmod-service-type
-            hello-service-type))
-
-(define (nvidia-insmod-shepherd-service config)
-  (list (shepherd-service
-         (provision '(nvidia-insmod))
-         (requirement '())
-         ;; run the nvidia-insmod script
-         ;; or just run the modprobe or insmod here?
-         (start #~(lambda _
-                    (and
-                     (zero? (system* (string-append #$nvidia-driver "/bin/nvidia-insmod"))))))
-         ;; I probably don't need stop. The stop seems not to be
-         ;; called anyway when one-shot is true
-         ;;
-         ;; (stop #~(make-forkexec-destructor
-         ;;          (list (string-append #$nvidia-driver "/bin/nvidia-rmmod"))))
-         ;;
-         ;; looks like I have to have a stop procedure, otherwise the
-         ;; start is never called.
-         ;; (stop #~(make-kill-destructor))
-         ;; (stop #~(const #f))
-         (one-shot? #t)
-         ;; FIXME When the system boot, starting nvidia-insmod does
-         ;; not seem to have any effect. Only when I reconfigure the
-         ;; system, the service seems to work.
-         (auto-start? #t)
-         (respawn? #f))))
-
-(define nvidia-insmod-service-type
-  (service-type
-   (name 'nvidia-insmod-name)
-   (extensions
-    (list (service-extension shepherd-root-service-type nvidia-insmod-shepherd-service)))
-   (default-value '())))
-
-(define (hello-shepherd-service config)
-  (list (shepherd-service
-         (provision '(hello))
-         (requirement '())
-         (start #~(lambda _
-                    (and
-                     (zero? (system* "touch" "/tmp/hello"))
-                     (zero? (system* "touch" "/home/hebi/tmp/hello"))
-                     (zero? (system* "touch" "/var/hello")))))
-         (respawn? #f))))
-
-(define hello-service-type
-  (service-type
-   (name 'hello)
-   (extensions
-    (list (service-extension shepherd-root-service-type hello-shepherd-service)))
-   (default-value '())))
+  #:use-module (srfi srfi-1))
 
 (define-public nvidia-driver
   (package
@@ -124,7 +70,6 @@
      (sha256 (base32 "0v3pq677ab01qdmwl5dawk8hn39qlwj05p8s9qzh9irmrlnc1izs"))
      (method url-fetch)
      (file-name (string-append "nvidia-driver-" version "-checkout"))))
-   ;; (build-system gnu-build-system)
    (build-system linux-module-build-system)
    (arguments
     `(#:phases
@@ -140,17 +85,11 @@
                     (chdir ,(format #f "NVIDIA-Linux-x86_64-~a" version))
                     (invoke "pwd")
                     #t)))
-       ;; (delete 'configure)
        (replace 'build
                 (lambda*  (#:key inputs outputs #:allow-other-keys)
-                  ;; FIXME why pwd always output -0 instead of
-                  ;; -1/2/3...? The number seems to increase for
-                  ;; newer builds
-                                         
-                  ;; I cannot use with-directory-excursion,
-                  ;; because the install phase needs to be in
-                  ;; the kernel folder. Otherwise no .ko would
-                  ;; be installed
+                  ;; I cannot use with-directory-excursion, because the install
+                  ;; phase needs to be in the kernel folder. Otherwise no .ko
+                  ;; would be installed
                   (chdir "kernel")
                   ;; patch Kbuild
                   (substitute* "Kbuild"
@@ -182,24 +121,20 @@
                        (scandir "." (lambda (name)
                                       (string-contains name ".so"))))
 
-
                       ;; xorg files
                       (install-file "nvidia_drv.so" (string-append out "/lib/xorg/modules/drivers/"))
                       (install-file "libglxserver_nvidia.so.435.21" (string-append out "/lib/xorg/modules/extensions/"))
-                      ;; Xorg seems to look for libglx.so
-                      ;; It is not "libGLX.so.0"
-                      ;;
-                      ;; FIXME even if I enable this, it still not working, libwrast not found, etc
-                      ;;
-                      ;; (link (string-append moddir "libglxserver_nvidia.so.435.21")
-                      ;;       (string-append moddir "libglx.so"))
 
                       ;; ------------------------------
                       ;; Binary files
                       (install-file "nvidia-smi" bindir)
-                      ;; the runpath does not seem to work, xmi uses system ld, and seems to work
+
+                      ;; the runpath does not seem to work, thus the nvidia-xmi
+                      ;; (which is not patchelf-ed) intends to use system ld
+                      ;; (with LD_LIBRARY_PATH), and seems to work
                       (copy-file "nvidia-smi" (string-append bindir "/nvidia-xmi"))
-                      ;; This cannot pass validate_runpath with weird errors
+
+                      ;; nvidia-settings cannot pass validate_runpath with weird errors
                       ;; (install-file "nvidia-settings" bindir)
 
                       ;; ------------------------------
@@ -257,6 +192,7 @@
                                     (when (elf-file? file)
                                       (patch-elf file)))
                                   (find-files out  ".*\\.so"))
+                        ;; patch nvidia-smi but leave nvidia-xmi untouched
                         (patch-elf (string-append out "/bin/nvidia-smi")))
 
                       ;; ------------------------------
@@ -310,6 +246,6 @@
       ("bash-minimal" ,bash-minimal)
       ("linux-libre" ,linux-libre)))
    (home-page "https://www.nvidia.com")
-   (synopsis "TODO")
+   (synopsis "Proprietary Nvidia Driver")
    (description "Evil driver")
    (license #f)))
