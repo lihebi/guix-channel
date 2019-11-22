@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GUIX_PACKAGE_PATH="$HOME/git/guix-channel/"
+export GUIX_PACKAGE_PATH="$HOME/git/guix-channel/guix"
 # export GUIX_PACKAGE_PATH="$GUIX_PACKAGE_PATH:$HOME/git/reading/guix-bimsb-nonfree/"
 
 export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
