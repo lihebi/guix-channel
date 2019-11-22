@@ -1,4 +1,4 @@
-#+TITLE: My Guix configuration and personal package channel
+#+TITLE: a non-free guix channel
 
 To use this channel, put =$HOME/.config/guix/channels.scm= the following:
 
@@ -36,15 +36,15 @@ without patchelf) works with LD_LIBRARY_PATH set to your
 
 ** Use as xorg driver (NOT WORKING)
 
-You need three piece of configurations:
+You need three pieces of configurations:
 
-1. add service to load kernel module
+- add service to load kernel module
 
 #+begin_example
 (service nvidia-insmod-service-type)
 #+end_example
 
-2. instruct xorg to use nvidia driver
+- instruct xorg to use nvidia driver
 
 #+BEGIN_SRC scheme
 (set-xorg-configuration
@@ -54,7 +54,7 @@ You need three piece of configurations:
       gdm-service-type)
 #+END_SRC
 
-3. kernel argument should blacklist nouveau
+- kernel argument should blacklist nouveau
 
 #+begin_example
 (kernel-arguments '("modprobe.blacklist=nouveau"))
