@@ -1,0 +1,198 @@
+#+TITLE: Implementation notes
+
+* TODO-list
+
+** TODO nvidia driver
+
+* Nvidia Driver
+
+Nvidia
+- https://git.archlinux.org/svntogit/packages.git/tree/trunk/PKGBUILD?h=packages/nvidia
+
+Nix:
+- https://github.com/NixOS/nixpkgs/tree/bd6ba87381ef6274a830253b60e481209d4d7c7d/pkgs/os-specific/linux/nvidia-x11
+
+Arch PKGBUILD:
+- nvidia driver https://www.archlinux.org/packages/extra/x86_64/nvidia/
+- cuda https://www.archlinux.org/packages/community/x86_64/cuda/
+
+Looks like I have to have:
+1. ldconfig
+2. /lib64/ld.xxx
+3. /usr/include
+4. linux kernel tree
+
+The linux-libre-headers is not enough. I need the kernel source tree.
+
+** Nix
+
+#+begin_example
+ libname_short=`echo -n "$libname" | sed 's/so\..*/so/'`
+
+      if [[ "$libname" != "$libname_short" ]]; then
+        ln -srnf "$libname" "$libname_short"
+      fi
+
+      if [[ $libname_short =~ libEGL.so || $libname_short =~ libEGL_nvidia.so || $libname_short =~ libGLX.so || $libname_short =~ libGLX_nvidia.so ]]; then
+          major=0
+      else
+          major=1
+      fi
+
+      if [[ "$libname" != "$libname_short.$major" ]]; then
+        ln -srnf "$libname" "$libname_short.$major"
+      fi`*'`
+#+end_example
+
+** CANCELED amdgpu?
+   CLOSED: [2019-09-16 Mon 03:08]
+OpenCL vs. Cuda
+
+amdgpu is not entirely open source as well, and as a result amdgpu did
+not work on my RX470.
+
+** Usage of this module
+
+Use this service:
+
+#+begin_example
+;; FIXME ensure this is started before gdm
+(service nvidia-insmod-service-type)
+#+end_example
+
+(Not working) When the system boot, starting nvidia-insmod does not
+seem to have any effect. Only when I reconfigure the system, the
+service seems to work.
+
+set xorg-configuration by:
+
+#+begin_example
+     (set-xorg-configuration
+      (xorg-configuration
+       (modules (cons* nvidia-driver %default-xorg-modules))
+       (drivers '(
+                  "nvidia"
+                  ;; "amdgpu"
+                  ;; "ati"
+                  )))
+      gdm-service-type)
+#+end_example
+
+I put this inside the list of service, but I think it should work as
+long as this is executed? This returns a simple-service.
+
+And you need to block nouveau
+
+#+begin_example
+(kernel-arguments '(
+  "modprobe.blacklist=nouveau"
+  ;; "modprobe.blacklist=radeon,amdgpu"
+  ))
+#+end_example
+
+** more references
+- read guix service https://guix.gnu.org/manual/en/html_node/Defining-Services.html#Defining-Services
+- custom kernel https://guix.gnu.org/blog/2019/creating-and-using-a-custom-linux-kernel-on-guix-system/
+- packaing tutorail https://guix.gnu.org/blog/2018/a-packaging-tutorial-for-guix/
+- nvidia installer source: https://download.nvidia.com/XFree86/nvidia-installer/
+
+** DONE patchelf all .so and bins
+   CLOSED: [2019-09-13 Fri 16:56]
+so that I don't need:
+
+#+begin_example
+export LD_LIBRARY_PATH=/home/hebi/.guix-profile/lib:/usr/lib:$LD_LIBRARY_PATH
+#+end_example
+
+** DONE validate the patchelf using dll
+   CLOSED: [2019-09-13 Fri 16:56]
+- libx11
+- all .so files
+** DONE enable validation phase
+   CLOSED: [2019-09-13 Fri 16:56]
+** TODO if I manually load kernel, can I start X
+There is only one error:
+
+#+begin_example
+[  7383.840] (WW) Falling back to old probe method for modesetting
+#+end_example
+
+This error probably isn't important. I need to test if nouveau also has this error.
+
+I think the problem is due to my xwrapper, the Xorg probably works,
+but it is not starting a proper WM?  I would try gdm.
+
+** TODO load kernel module automatically
+LINUX_MODULE_DIRECTORY, I don't think it is possible. How Nix did it?
+** TODO load module manually at system startup
+- before X tries to load it
+- as a service?
+
+If I define it as a service, I need to make sure that gdm-service-type
+starts after it. However, the gdm-shepherd-service's requirements are
+fixed to (requirement '(dbus-system user-processes host-name
+udev)). Thus, without changing the guix source code, it is impossible
+to achieve that.
+
+I have to modify the gdm service itself.
+
+** DONE generate a script for loading kernel modules
+   CLOSED: [2019-09-14 Sat 18:33]
+** TODO test whether I can use cuda
+If the I finally cannot make the Xorg work
+
+** (2017 GPCE) Code staging in GNU Guix
+
+#+begin_example
+@article{courtes2017code,
+  title={Code staging in GNU Guix},
+  author={Court{\`e}s, Ludovic},
+  journal={ACM SIGPLAN Notices},
+  volume={52},
+  number={12},
+  pages={41--48},
+  year={2017},
+  publisher={ACM}
+}
+#+end_example
+
+* More user guix package repos
+
+Efraim Flashner
+- github @Millak: https://github.com/Millak
+- guix channel https://github.com/Millak/my-guix
+- guix config https://github.com/Millak/guix-config
+
+Julien Lepiller
+- framagit @tyreunom https://framagit.org/tyreunom
+- guix channel https://framagit.org/tyreunom/guix-more
+- guix channel https://framagit.org/tyreunom/maven-build-channel
+- A very interesting project to make home directory read-only:
+  https://framagit.org/tyreunom/guix-home-manager
+
+
+rekado
+- github @rekado: https://github.com/rekado
+- guix channel https://github.com/BIMSBbioinfo/guix-bimsb-nonfree
+- guix channel https://github.com/BIMSBbioinfo/guix-bimsb
+
+pkill9
+- gitlab: https://gitlab.com/pkill-9
+- blog: https://miha.info/guix-fhs-service/
+  - seems to be the same site https://pkill-9.gitlab.io/
+- config: https://gitlab.com/pkill-9/guix-config
+- channel https://gitlab.com/pkill-9/guix-packages-nonfree
+- channel https://gitlab.com/pkill-9/guix-packages-free
+
+Pjotr Prins
+- github @pjotrp https://github.com/pjotrp
+- notes: https://github.com/pjotrp/guix-notes
+
+Jiaming Yuan
+- web https://trivialfis.github.io/
+- githug @trivialfis https://github.com/trivialfis
+- channel https://github.com/trivialfis/guixpkgs
+- emacs config https://github.com/trivialfis/Foci-Emacs
+- guix-conda forked from fredmanglis/guix-conda https://github.com/pjotrp/guix-conda
+- a interesting project: https://gitlab.com/pjotrp/guix-relocatable-binary-packages
+
