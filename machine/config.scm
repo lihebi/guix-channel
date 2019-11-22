@@ -9,6 +9,8 @@
 (use-service-modules desktop networking ssh xorg web)
 (use-package-modules base bash linux ssh perl lisp)
 
+(use-modules (nongnu packages linux))
+
 (define %root (file-system
                (mount-point "/")
                (device "/dev/sda2")
@@ -60,6 +62,12 @@
  (locale "en_US.utf8")
  (timezone "America/Chicago")
  (kernel linux-libre)
+ ;; FIXME linux failed to build with the weired internal compiler error (occured
+ ;; often in Guix)
+ ;;
+ ;; (kernel linux)
+ ;; (firmware (list linux-firmware))
+ ;; (kernel-arguments '("intel_iommu=on" "iommu=pt" "modprobe.blacklist=nouveau"))
  (initrd-modules %base-initrd-modules)
 
  (bootloader
