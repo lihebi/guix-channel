@@ -1,4 +1,4 @@
-#+TITLE: a non-free guix channel
+#+TITLE: A non-free guix channel
 
 To use this channel, put =$HOME/.config/guix/channels.scm= the following:
 
