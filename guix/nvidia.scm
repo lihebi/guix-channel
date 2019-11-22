@@ -67,8 +67,9 @@
          (requirement '())
          ;; run the nvidia-insmod script
          ;; or just run the modprobe or insmod here?
-         (start #~(make-forkexec-constructor
-                   (list (string-append #$nvidia-driver "/bin/nvidia-insmod"))))
+         (start #~(lambda _
+                    (and
+                     (zero? (system* (string-append #$nvidia-driver "/bin/nvidia-insmod"))))))
          ;; I probably don't need stop. The stop seems not to be
          ;; called anyway when one-shot is true
          ;;
@@ -83,7 +84,7 @@
          ;; FIXME When the system boot, starting nvidia-insmod does
          ;; not seem to have any effect. Only when I reconfigure the
          ;; system, the service seems to work.
-         (auto-start? #f)
+         (auto-start? #t)
          (respawn? #f))))
 
 (define nvidia-insmod-service-type
@@ -97,10 +98,11 @@
   (list (shepherd-service
          (provision '(hello))
          (requirement '())
-         (start #~(make-forkexec-constructor
-                   (list "touch" "/tmp/hello")))
-         (one-shot? #t)
-         (auto-start? #f)
+         (start #~(lambda _
+                    (and
+                     (zero? (system* "touch" "/tmp/hello"))
+                     (zero? (system* "touch" "/home/hebi/tmp/hello"))
+                     (zero? (system* "touch" "/var/hello")))))
          (respawn? #f))))
 
 (define hello-service-type
