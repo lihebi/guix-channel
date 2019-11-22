@@ -196,3 +196,7 @@ Jiaming Yuan
 - guix-conda forked from fredmanglis/guix-conda https://github.com/pjotrp/guix-conda
 - a interesting project: https://gitlab.com/pjotrp/guix-relocatable-binary-packages
 
+
+nonguix:
+- nonguix: https://gitlab.com/nonguix/nonguix
+- group: guix-gaming-channels https://gitlab.com/guix-gaming-channels
